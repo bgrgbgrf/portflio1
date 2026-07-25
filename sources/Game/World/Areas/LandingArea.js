@@ -90,7 +90,7 @@ export class LandingArea extends Area
                 continue
             }
 
-            const geometry = new TextGeometry(char, {
+            let geometry = new TextGeometry(char, {
                 font: font,
                 size: 1.8,
                 depth: 0.5,
@@ -100,6 +100,8 @@ export class LandingArea extends Area
                 bevelSize: 0.04,
                 bevelSegments: 3
             })
+            geometry = geometry.toNonIndexed()
+            geometry.computeVertexNormals()
             geometry.computeBoundingBox()
             const boundingBox = geometry.boundingBox
             const width = boundingBox.max.x - boundingBox.min.x
