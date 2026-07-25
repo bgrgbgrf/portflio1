@@ -4,6 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "postinstall": "node scripts/patch-three-webgpu.js",
     "dev": "vite --mode development",
     "build": "vite build --mode production",
     "preview": "vite preview",
