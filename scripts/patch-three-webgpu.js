@@ -44,14 +44,22 @@ for(const filePath of filesToPatch)
         )
 
         // 5. 64-byte minimum WebGPU uniform buffer byteLength guard (mat4x4 / WGSL uniform struct requirement)
-        content = content.replace(
-            /const\s+byteLength\s*=\s*(?:Math\.max\([^)]+\)|binding\.byteLength);/g,
+        content = content.replaceAll(
+            'const byteLength = Math.max( 16, Math.ceil( ( binding.byteLength || 0 ) / 16 ) * 16 );',
+            'const byteLength = Math.max( 64, Math.ceil( ( binding.byteLength || 64 ) / 16 ) * 16 );'
+        )
+        content = content.replaceAll(
+            'const byteLength = binding.byteLength;',
             'const byteLength = Math.max( 64, Math.ceil( ( binding.byteLength || 64 ) / 16 ) * 16 );'
         )
 
         // 6. Non-zero WebGPU attribute buffer size guard
-        content = content.replace(
-            /const\s+size\s*=\s*(?:Math\.max\([^)]+\)|byteLength\s*\+\s*\(\s*\(\s*4\s*-\s*\(\s*byteLength\s*%\s*4\s*\)\s*\)\s*%\s*4\s*\));/g,
+        content = content.replaceAll(
+            'const size = byteLength + ( ( 4 - ( byteLength % 4 ) ) % 4 );',
+            'const size = Math.max( 64, byteLength + ( ( 4 - ( byteLength % 4 ) ) % 4 ) );'
+        )
+        content = content.replaceAll(
+            'const size = Math.max( 16, byteLength + ( ( 4 - ( byteLength % 4 ) ) % 4 ) );',
             'const size = Math.max( 64, byteLength + ( ( 4 - ( byteLength % 4 ) ) % 4 ) );'
         )
 
