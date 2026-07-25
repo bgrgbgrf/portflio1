@@ -29,6 +29,9 @@ export class InstancedGroup
     {
         this.meshes = []
 
+        if(this.count === 0 || !this.group)
+            return
+
         this.group.traverse((_child) =>
         {
             if(_child.isMesh)

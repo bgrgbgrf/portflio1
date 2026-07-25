@@ -9,8 +9,8 @@ export class PhysicsWireframe
         this.active = false
 
         this.geometry = new THREE.BufferGeometry()
-        this.geometry.setAttribute('position', new THREE.Float32BufferAttribute([], 3))
-        this.geometry.setAttribute('color', new THREE.Float32BufferAttribute([], 4))
+        this.geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3))
+        this.geometry.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 1], 4))
 
         this.material = new THREE.LineBasicNodeMaterial({ vertexColors: true })
 
@@ -46,7 +46,9 @@ export class PhysicsWireframe
         if(!this.active)
             return
 
-        const { vertices, colors } = this.game.physics.world.debugRender()
+        const debugData = this.game.physics.world.debugRender()
+        const vertices = (debugData && debugData.vertices && debugData.vertices.length > 0) ? debugData.vertices : new Float32Array([0, 0, 0])
+        const colors = (debugData && debugData.colors && debugData.colors.length > 0) ? debugData.colors : new Float32Array([1, 1, 1, 1])
 
         this.geometry.attributes.position.array = vertices
         this.geometry.attributes.position.count = vertices.length / 3
