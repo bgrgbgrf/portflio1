@@ -43,16 +43,16 @@ for(const filePath of filesToPatch)
             'passEncoderGPU.draw( ( counts[ i ] || 0 ) | 0, ( count || 1 ) | 0, ( starts[ i ] || 0 ) | 0, ( firstInstance || 0 ) | 0 );'
         )
 
-        // 5. Non-zero WebGPU uniform buffer byteLength guard
+        // 5. 64-byte minimum WebGPU uniform buffer byteLength guard (mat4x4 / WGSL uniform struct requirement)
         content = content.replace(
-            /const\s+byteLength\s*=\s*binding\.byteLength;/g,
-            'const byteLength = Math.max( 16, Math.ceil( ( binding.byteLength || 0 ) / 16 ) * 16 );'
+            /const\s+byteLength\s*=\s*(?:Math\.max\([^)]+\)|binding\.byteLength);/g,
+            'const byteLength = Math.max( 64, Math.ceil( ( binding.byteLength || 64 ) / 16 ) * 16 );'
         )
 
         // 6. Non-zero WebGPU attribute buffer size guard
         content = content.replace(
-            /const\s+size\s*=\s*byteLength\s*\+\s*\(\s*\(\s*4\s*-\s*\(\s*byteLength\s*%\s*4\s*\)\s*\)\s*%\s*4\s*\);/g,
-            'const size = Math.max( 16, byteLength + ( ( 4 - ( byteLength % 4 ) ) % 4 ) );'
+            /const\s+size\s*=\s*(?:Math\.max\([^)]+\)|byteLength\s*\+\s*\(\s*\(\s*4\s*-\s*\(\s*byteLength\s*%\s*4\s*\)\s*\)\s*%\s*4\s*\));/g,
+            'const size = Math.max( 64, byteLength + ( ( 4 - ( byteLength % 4 ) ) % 4 ) );'
         )
 
         fs.writeFileSync(filePath, content, 'utf8')
