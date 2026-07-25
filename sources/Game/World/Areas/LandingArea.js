@@ -6,6 +6,10 @@ import { Area } from './Area.js'
 import gsap from 'gsap'
 import { MeshDefaultMaterial } from '../../Materials/MeshDefaultMaterial.js'
 
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
+import fontData from 'three/examples/fonts/helvetiker_bold.typeface.json'
+
 export class LandingArea extends Area
 {
     constructor(model)
@@ -25,15 +29,121 @@ export class LandingArea extends Area
     {
         const references = this.references.items.get('letters')
 
-        for(const reference of references)
+        let startPosition = new THREE.Vector3(-1, 0, 0)
+        let startQuaternion = new THREE.Quaternion()
+
+        if(references && references.length > 0)
         {
-            const physical = reference.userData.object.physical
-            physical.colliders[0].setActiveEvents(this.game.RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS)
-            physical.colliders[0].setContactForceEventThreshold(5)
-            physical.onCollision = (force, position) =>
+            const firstObj = references[0].userData.object
+            if(firstObj && firstObj.physical && firstObj.physical.initialState)
             {
-                this.game.audio.groups.get('hitBrick').playRandomNext(force, position)
+                startPosition.copy(firstObj.physical.initialState.position)
+                startQuaternion.copy(firstObj.physical.initialState.rotation)
             }
+            else
+            {
+                startPosition.copy(references[0].position)
+                startQuaternion.copy(references[0].quaternion)
+            }
+        }
+
+        // Hide and disable old 3D letter objects
+        if(references)
+        {
+            for(const reference of references)
+            {
+                const object = reference.userData.object
+                if(object)
+                {
+                    if(object.physical && object.physical.body)
+                    {
+                        object.physical.body.setEnabled(false)
+                    }
+                    if(object.visual && object.visual.object3D)
+                    {
+                        object.visual.object3D.visible = false
+                    }
+                }
+                reference.visible = false
+            }
+        }
+
+        // Generate 3D letters for PALI
+        const fontLoader = new FontLoader()
+        const font = fontLoader.parse(fontData)
+        const textString = "PALI"
+
+        const letterMaterial = new MeshDefaultMaterial({
+            colorNode: color('#ff3b8d'),
+            hasWater: false
+        })
+
+        let currentX = 0
+        const letterSpacing = 0.25
+
+        for(let i = 0; i < textString.length; i++)
+        {
+            const char = textString[i]
+            if(char === ' ')
+            {
+                currentX += 1.4
+                continue
+            }
+
+            const geometry = new TextGeometry(char, {
+                font: font,
+                size: 1.8,
+                depth: 0.5,
+                curveSegments: 8,
+                bevelEnabled: true,
+                bevelThickness: 0.08,
+                bevelSize: 0.04,
+                bevelSegments: 3
+            })
+            geometry.computeBoundingBox()
+            const boundingBox = geometry.boundingBox
+            const width = boundingBox.max.x - boundingBox.min.x
+            const height = boundingBox.max.y - boundingBox.min.y
+            const depth = boundingBox.max.z - boundingBox.min.z
+
+            geometry.center()
+
+            const letterMesh = new THREE.Mesh(geometry, letterMaterial)
+
+            const offset = new THREE.Vector3(currentX + width / 2, height / 2, 0)
+            offset.applyQuaternion(startQuaternion)
+
+            const letterPos = startPosition.clone().add(offset)
+
+            const object = this.game.objects.add(
+                {
+                    model: letterMesh,
+                    updateMaterials: false,
+                    castShadow: true,
+                    receiveShadow: true
+                },
+                {
+                    type: 'dynamic',
+                    position: letterPos,
+                    rotation: startQuaternion,
+                    friction: 0.7,
+                    mass: 5,
+                    sleeping: true,
+                    colliders: [ { shape: 'cuboid', parameters: [ width * 0.5, height * 0.5, depth * 0.5 ] } ]
+                }
+            )
+
+            if(object.physical && object.physical.colliders && object.physical.colliders[0])
+            {
+                object.physical.colliders[0].setActiveEvents(this.game.RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS)
+                object.physical.colliders[0].setContactForceEventThreshold(5)
+                object.physical.onCollision = (force, position) =>
+                {
+                    this.game.audio.groups.get('hitBrick').playRandomNext(force, position)
+                }
+            }
+
+            currentX += width + letterSpacing
         }
     }
 

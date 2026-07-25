@@ -365,6 +365,9 @@ export class ProjectsArea extends Area
                 const uvOld = uv().toVar()
                 const uvNew = uv().toVar()
 
+                uvOld.y.assign(uvOld.y.oneMinus())
+                uvNew.y.assign(uvNew.y.oneMinus())
+
                 // Parallax (add an offset according to progress)
                 uvNew.x.addAssign(this.images.animationProgress.oneMinus().mul(-0.25).mul(this.images.animationDirection))
                 uvOld.x.addAssign(this.images.animationProgress.mul(0.25).mul(this.images.animationDirection))
@@ -479,7 +482,8 @@ export class ProjectsArea extends Area
                 resource = {}
                 resource.loaded = false
 
-                const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                const isKtx = key.endsWith('.ktx')
+                const loader = this.game.resourcesLoader.getLoader(isKtx ? 'textureKtx' : 'texture')
 
                 loader.load(
                     path,
@@ -487,7 +491,8 @@ export class ProjectsArea extends Area
                     {
                         resource.texture = loadedTexture
                         resource.colorSpace = THREE.SRGBColorSpace
-                        resource.flipY = false
+                        resource.flipY = !isKtx
+                        loadedTexture.flipY = !isKtx
                         resource.magFilter = THREE.LinearFilter
                         resource.minFilter = THREE.LinearFilter
                         resource.generateMipmaps = false
