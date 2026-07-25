@@ -199,9 +199,9 @@ export class Game
         this.world.step(1)
         this.overlay = new Overlay()
 
-        // Pre-render if quality high
-        if(this.quality.level === 0 && this.rendering.renderer.backend.isWebGPUBackend)
-            PreRenderer.render()
+        // Pre-render if quality high (disabled to prevent WebGPU 6-pass compilation freeze)
+        // if(this.quality.level === 0 && this.rendering.renderer.backend.isWebGPUBackend)
+        //     PreRenderer.render()
 
         this.ticker.wait(3, () =>
         {
