@@ -100,7 +100,10 @@ export class LandingArea extends Area
                 bevelSize: 0.04,
                 bevelSegments: 3
             })
-            geometry = geometry.toNonIndexed()
+            if(geometry.index)
+            {
+                geometry = geometry.toNonIndexed()
+            }
             geometry.computeVertexNormals()
             geometry.computeBoundingBox()
             const boundingBox = geometry.boundingBox
